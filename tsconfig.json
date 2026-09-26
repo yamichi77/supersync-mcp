@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@sp/sync-core": [
+        "./vendor/sync-core/src/index.ts"
+      ],
+      "@sp/shared-schema": [
+        "./vendor/shared-schema/src/index.ts"
+      ],
+      "@sp/sync-providers/*": [
+        "./vendor/sync-providers/src/*.ts"
+      ]
+    },
+    "experimentalDecorators": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "src/official-entry.ts",
+    "src/official-archive.ts"
+  ]
+}

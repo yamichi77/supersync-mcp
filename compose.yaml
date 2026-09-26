@@ -1,0 +1,48 @@
+services:
+  dev:
+    image: node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      npm_config_cache: /tmp/npm-cache
+    mem_limit: 768m
+    command: npm test
+
+  mcp:
+    image: node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    working_dir: /workspace
+    command: ["node", "--import", "tsx", "src/server.ts"]
+    environment:
+      OIDC_ISSUER: "${OIDC_ISSUER:?Set OIDC_ISSUER in .env}"
+      MCP_RESOURCE: "${MCP_RESOURCE:?Set MCP_RESOURCE in .env}"
+      OIDC_ROLE_CLIENT_ID: "${OIDC_ROLE_CLIENT_ID:-sp-mcp}"
+      OIDC_READ_ROLE: "${OIDC_READ_ROLE:-mcp.read}"
+      OIDC_WRITE_ROLE: "${OIDC_WRITE_ROLE:-mcp.write}"
+      PORT: "1901"
+    restart: unless-stopped
+    ports:
+      - "${MCP_BIND_ADDRESS:-127.0.0.1}:${MCP_HOST_PORT:-1901}:1901"
+    volumes:
+      - ./src:/workspace/src:ro
+      - ./dist:/workspace/dist:ro
+      - ./vendor:/workspace/vendor:ro
+      - ./node_modules:/workspace/node_modules:ro
+      - ./package.json:/workspace/package.json:ro
+      - ./tsconfig.json:/workspace/tsconfig.json:ro
+      - ./secrets/supersync.json:/workspace/secrets/supersync.json:ro
+      - ./secrets/authorization.json:/workspace/secrets/authorization.json:ro
+      - ./data:/workspace/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    mem_limit: 512m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1901/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

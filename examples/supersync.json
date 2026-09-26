@@ -1,0 +1,5 @@
+{
+  "baseUrl": "https://sync.example.com",
+  "accessToken": "REPLACE_WITH_YOUR_SUPERSYNC_TOKEN",
+  "encryptionPassword": "REPLACE_WITH_YOUR_SYNC_ENCRYPTION_PASSWORD"
+}

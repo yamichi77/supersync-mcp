@@ -1,0 +1,17 @@
+node_modules/
+dist/
+data/
+secrets/
+.env
+.env.*
+!.env.example
+upstream/
+vendor-source/
+upstream-source.tar.gz
+backups/
+*.log
+*.sqlite
+*.sqlite-*
+*.sql
+*.sql.gz
+.upstream-staging-*/
