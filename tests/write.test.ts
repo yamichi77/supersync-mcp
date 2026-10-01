@@ -24,7 +24,7 @@ test('read credential cannot discover or invoke writes; write credential exposes
   const server=makeServer(provider,canWrite,writer),client=new Client({name:'test',version:'1'}),[a,b]=InMemoryTransport.createLinkedPair();
   await server.connect(a);await client.connect(b);
   try{
-   const tools=await client.listTools();assert.equal(tools.tools.length,canWrite?12:6);
+   const tools=await client.listTools();assert.equal(tools.tools.length,canWrite?16:7);
    const result=await client.callTool({name:'update_task_tags',arguments:{requestId:'r',expectedServerSeq:0,id:'t',addTagIds:['doing'],removeTagIds:['todo']}});
    assert.equal(calls,canWrite?1:0);assert.equal(Boolean(result.isError),!canWrite);
   }finally{await client.close();await server.close();}

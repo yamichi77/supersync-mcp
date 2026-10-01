@@ -8,7 +8,7 @@ test('MCP initialize/list/call exposes only read tools and excludes unrelated co
  const client=new Client({name:'test',version:'1'});
  const [a,b]=InMemoryTransport.createLinkedPair();await server.connect(a);await client.connect(b);
  try{
-  const tools=await client.listTools();assert.equal(tools.tools.length,6);assert.ok(tools.tools.every(t=>t.annotations?.readOnlyHint));
+  const tools=await client.listTools();assert.equal(tools.tools.length,7);assert.ok(tools.tools.every(t=>t.annotations?.readOnlyHint));
   const result=await client.callTool({name:'list_projects',arguments:{}});
   assert.ok(!JSON.stringify(result).includes('hidden'));
   const task=await client.callTool({name:'get_task',arguments:{id:'t'}});

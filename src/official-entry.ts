@@ -26,6 +26,8 @@ export const reduce = [sectionSharedMetaReducer,taskSharedCrudMetaReducer,taskBa
 import { lwwUpdateMetaReducer } from '../vendor-source/src/app/root-store/meta/task-shared-meta-reducers/lww-update.meta-reducer';
 export {convertOpToAction} from '../vendor-source/src/app/op-log/apply/operation-converter.util';
 export {DEFAULT_TASK} from '../vendor-source/src/app/features/tasks/task.model';
+export {DEFAULT_PROJECT} from '../vendor-source/src/app/features/project/project.const';
+export {rewriteTagIdsForPanel} from '../vendor-source/src/app/features/boards/boards.util';
 export {KNOWN_ACTION_TYPES} from '../vendor-source/src/app/op-log/core/action-types.enum';
 export {sortTimeTrackingAndTasksFromArchiveYoungToOld} from '../vendor-source/src/app/features/archive/util/sort-data-to-flush';
 

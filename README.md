@@ -16,14 +16,19 @@ Super Productivity公式プロジェクトとは独立しています。
 | 完了・再開 | complete_task / reopen_task |
 | タグ差分 | update_task_tags |
 | 標準Kanban | set_task_kanban_status |
+| プロジェクト作成 | create_project |
+| 汎用ボード | get_board / create_board / update_board |
 
-全12ツールに入力・出力スキーマを定義しています。
+バージョン0.3.0の全16ツール（readロールのみは7ツール）に入力・出力スキーマを定義しています。
 成功結果はstructuredContentと互換用JSONテキストで返します。
 書込みはreadロールに加えてwriteロールがある場合だけ公開・実行されます。
 
 - タグ変更は指定しないタグを保持します。TODAYは予定日で管理される仮想タグのため対象外です。
 - Kanbanはtodo / in_progress / doneを指定します。進行中はKANBAN_IN_PROGRESSタグを使います。
-- 本文更新はtitle / notesのみ。アーカイブ復元・削除・予定日変更・プロジェクト作成・列内並べ替えは未提供です。
+- 本文更新はtitle / notesのみ。アーカイブ復元・削除・予定日変更・列内並べ替えは未提供です。
+- ボードは任意の名前・1〜50列・既存タグ・完了/予定/backlogフィルタを指定できます。8状態や相互排他を強制しません。
+- update_boardは既存列の設定だけを更新し、列順・カード配置・プロジェクト範囲・タスク本体を保持します。
+- 引数・実装上限・旧専用2ツールの切替条件は[ボードAPI仕様](docs/BOARD-API-REVIEW.md)を参照してください。
 - MCPは /mcp のStreamable HTTP（ステートレス）で提供します。
 
 ## 必要なもの
