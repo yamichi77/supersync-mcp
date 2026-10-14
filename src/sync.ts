@@ -1,7 +1,9 @@
 import {loadCredentials} from './config.js';
 import {openStore,readLimitedJson,validatePage,storePage} from './ingest.js';
 import {project} from './projection.js';import {mkdirSync} from 'node:fs';
+import {openAccountStore,type Account} from './accounts.js';
 import {mergeVectorClocks} from '@sp/sync-core';
+export function createSync(account?:Account){
 let pending:Promise<Awaited<ReturnType<typeof project>>>|undefined;
 let last:Awaited<ReturnType<typeof project>>|undefined;let at=0;
 async function download(db:ReturnType<typeof openStore>,cfg:ReturnType<typeof loadCredentials>){
@@ -26,6 +28,28 @@ async function download(db:ReturnType<typeof openStore>,cfg:ReturnType<typeof lo
  }
  throw new Error('SYNC_LIMIT');
 }
+async function refresh(){
+ const cfg=loadCredentials(account?.credentialsPath);const db=account?openAccountStore(account):(mkdirSync('data',{recursive:true,mode:0o700}),openStore('data/operations.sqlite'));
+ try{
+  try{return await download(db,cfg);}catch(e){
+   if(!(e instanceof Error)||!['PROJECTION_LOG_GAP','PROJECTION_SNAPSHOT_REQUIRED','PROJECTION_NOT_CURRENT'].includes(e.message))throw e;
+   // A clean download is validated and projected before replacing only the
+   // encrypted read cache. Durable write identities and the outbox survive.
+   const candidate=openStore(':memory:');
+   try{const result=await download(candidate,cfg);replaceDownloadedCache(db,candidate);return result;}finally{candidate.close();}
+  }
+ }finally{db.close();}
+}
+function invalidate(){last=undefined;at=0;}
+async function current(force=false){
+ if(force){if(pending)await pending;invalidate();}
+ if(last&&Date.now()-at<15000)return last;
+ if(!pending)pending=refresh().then(v=>{last=v;at=Date.now();return v;}).finally(()=>{pending=undefined;});
+ return pending;
+}
+
+return {current,invalidate};
+}
 export function replaceDownloadedCache(db:ReturnType<typeof openStore>,candidate:ReturnType<typeof openStore>){
  db.exec('BEGIN IMMEDIATE');
  try{
@@ -40,22 +64,6 @@ export function replaceDownloadedCache(db:ReturnType<typeof openStore>,candidate
   db.exec('COMMIT');
  }catch(e){db.exec('ROLLBACK');throw e;}
 }
-async function refresh(){
- const cfg=loadCredentials();mkdirSync('data',{recursive:true,mode:0o700});const db=openStore('data/operations.sqlite');
- try{
-  try{return await download(db,cfg);}catch(e){
-   if(!(e instanceof Error)||!['PROJECTION_LOG_GAP','PROJECTION_SNAPSHOT_REQUIRED','PROJECTION_NOT_CURRENT'].includes(e.message))throw e;
-   // A clean download is validated and projected before replacing only the
-   // encrypted read cache. Durable write identities and the outbox survive.
-   const candidate=openStore(':memory:');
-   try{const result=await download(candidate,cfg);replaceDownloadedCache(db,candidate);return result;}finally{candidate.close();}
-  }
- }finally{db.close();}
-}
-export function invalidate(){last=undefined;at=0;}
-export async function current(force=false){
- if(force){if(pending)await pending;invalidate();}
- if(last&&Date.now()-at<15000)return last;
- if(!pending)pending=refresh().then(v=>{last=v;at=Date.now();return v;}).finally(()=>{pending=undefined;});
- return pending;
-}
+
+const legacySync=createSync();
+export const current=legacySync.current,invalidate=legacySync.invalidate;
