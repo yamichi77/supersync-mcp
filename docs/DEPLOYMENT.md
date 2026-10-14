@@ -7,7 +7,7 @@
 1. Realmと利用ユーザーを用意する。
 2. resourceクライアントsp-mcpを作成する。ログイン用途にせず、mcp.read / mcp.writeクライアントロールを作る。
 3. 許可ユーザーにmcp.read、書込みを許可する場合はmcp.writeも付与する。
-4. ユーザーの不変ID（sub）をsecrets/authorization.jsonに設定する。ユーザー名ではない。
+4. 検証済みissuerとユーザーの不変ID（sub）をsecrets/accounts.jsonへ登録し、ユーザー別資格情報とデータディレクトリを対応付ける。[追加手順](USER-ACCOUNTS.md)を参照する。
 5. 接続先アプリごとにOAuthクライアントを作る。
    - Authorization Code / Standard Flow有効、PKCE S256必須。
    - ChatGPTなどSecretを扱うアプリはconfidential client。
@@ -20,7 +20,7 @@
 9. issuerのdiscoveryがS256をcode_challenge_methods_supportedに含むことを確認する。
 
 MCPはRS256署名、issuer、audience、sub、exp、iat、クライアントロールを検証します。
-固定subとロールの両方が必要です。複数ユーザーへのアカウント振分けは実装していません。
+ロールと検証済みissuer・subのアカウント対応が必要です。未登録ユーザーは403になり、各ユーザーの資格情報・キャッシュ・DB・書込みキューは分離されます。
 クライアントSecretはKeycloakと接続アプリで管理し、MCPのリポジトリには保存しません。
 
 ## nginx

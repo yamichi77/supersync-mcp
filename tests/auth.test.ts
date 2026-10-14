@@ -8,10 +8,10 @@ test('Keycloak issuer, audience, identity, expiry and roles are enforced',async(
  async function token(options:{aud?:string;sub?:string;issuer?:string;roles?:string[];expiry?:string}={}){
   return new SignJWT({resource_access:{'sp-mcp':{roles:options.roles??['mcp.read']}}}).setProtectedHeader({alg:'RS256'}).setIssuer(options.issuer??ISSUER).setAudience(options.aud??RESOURCE).setSubject(options.sub??'owner').setIssuedAt().setExpirationTime(options.expiry??'5m').sign(privateKey);
  }
- assert.deepEqual(await authorize(await token(),key,cfg),{subject:'owner',canWrite:false});
+ assert.deepEqual(await authorize(await token(),key,cfg),{issuer:ISSUER,subject:'owner',canWrite:false});
  await assert.rejects(authorize(await token({aud:'account'}),key,cfg));
  await assert.rejects(authorize(await token({issuer:'https://untrusted.example'}),key,cfg));
- await assert.rejects(authorize(await token({sub:'other'}),key,cfg),/SUBJECT_NOT_ALLOWED/);
+ assert.equal((await authorize(await token({sub:'other'}),key,cfg)).subject,'other');
  await assert.rejects(authorize(await token({roles:[]}),key,cfg));
  await assert.rejects(authorize(await token({expiry:'-10m'}),key,cfg));
  await assert.rejects(authorize(await token(),key,cfg,true));

@@ -48,7 +48,7 @@ cp .env.example .env
 mkdir -p secrets data
 chmod 700 secrets data
 cp examples/supersync.json secrets/supersync.json
-cp examples/authorization.json secrets/authorization.json
+cp examples/accounts.json secrets/accounts.json
 chmod 600 secrets/*.json
 
 # .envとsecrets/*.jsonのプレースホルダーを自分の値へ変更
@@ -87,7 +87,9 @@ docker compose exec -T mcp node --import tsx src/smoke-read.ts
 | .env / OIDC_READ_ROLE・OIDC_WRITE_ROLE | 既定mcp.read / mcp.write |
 | .env / MCP_BIND_ADDRESS・MCP_HOST_PORT | Dockerホスト側の待受。既定127.0.0.1:1901 |
 | secrets/supersync.json | SuperSync URL・accessToken・encryptionPassword |
-| secrets/authorization.json | 許可するKeycloakユーザーの不変sub |
+| secrets/accounts.json | 検証済みissuer・subとユーザー別資格情報・データディレクトリの対応 |
+
+複数ユーザーの追加と既存データの移行は[ユーザー別アカウントの手順](docs/USER-ACCOUNTS.md)を参照してください。
 
 秘密情報と実環境設定はGit管理対象外です。
 認証トークン、復号パスワード、DB、バックアップをIssueやログに貼り付けないでください。

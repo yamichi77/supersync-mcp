@@ -1,0 +1,10 @@
+{
+  "accounts": [
+    {
+      "issuer": "https://login.example.org/realms/team",
+      "subject": "<VERIFIED_KEYCLOAK_SUBJECT>",
+      "credentialsPath": "secrets/supersync.json",
+      "dataDir": "data"
+    }
+  ]
+}

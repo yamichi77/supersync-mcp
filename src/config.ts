@@ -25,4 +25,4 @@ export function loadServerConfig(env:NodeJS.ProcessEnv=process.env){
  if(new URL(parsed.data.resource).pathname!=='/mcp')throw new Error('SERVER_CONFIG_INVALID');
  return parsed.data;
 }
-export type AuthSettings=Pick<ReturnType<typeof loadServerConfig>,'issuer'|'resource'|'roleClientId'|'readRole'|'writeRole'>&{allowedSubject:string};
+export type AuthSettings=Pick<ReturnType<typeof loadServerConfig>,'issuer'|'resource'|'roleClientId'|'readRole'|'writeRole'>;

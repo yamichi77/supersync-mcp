@@ -33,7 +33,7 @@ services:
       - ./package.json:/workspace/package.json:ro
       - ./tsconfig.json:/workspace/tsconfig.json:ro
       - ./secrets/supersync.json:/workspace/secrets/supersync.json:ro
-      - ./secrets/authorization.json:/workspace/secrets/authorization.json:ro
+      - ./secrets/accounts.json:/workspace/secrets/accounts.json:ro
       - ./data:/workspace/data
     read_only: true
     tmpfs:

@@ -3,7 +3,8 @@ import {encrypt} from '@sp/sync-core';
 import {CURRENT_SCHEMA_VERSION,SuperSyncUploadOpsRequestSchema,SuperSyncUploadOpsResponseSchema} from '@sp/shared-schema';
 import {loadCredentials} from './config.js';
 import {openStore,readLimitedJson} from './ingest.js';
-import {current,invalidate} from './sync.js';
+import {current,invalidate,createSync} from './sync.js';
+import {openAccountStore,type Account} from './accounts.js';
 import {officialModule} from './projection.js';
 import {boardAction,boardUpdateAction,type BoardColumn,type BoardUpdate} from './boards.js';
 export type WriteInput={requestId:string;kind:'create'|'create_project'|'create_board'|'update_board'|'update'|'complete'|'reopen'|'tags'|'kanban';id?:string;expectedServerSeq?:number;projectId?:string;title?:string;notes?:string;addTagIds?:string[];removeTagIds?:string[];status?:'todo'|'in_progress'|'done';columns?:BoardColumn[]|BoardUpdate['columns'];cols?:number};
@@ -15,7 +16,7 @@ export function projectAction(official:any,state:any,title:string|undefined,id:s
 let queue:Promise<unknown>=Promise.resolve();
 export function writeTask(input:WriteInput){const result=queue.then(()=>perform(input));queue=result.catch(()=>{});return result;}
 export function initOutbox(db:ReturnType<typeof openStore>){db.exec('CREATE TABLE IF NOT EXISTS outbox(requestId TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, body TEXT NOT NULL, taskId TEXT NOT NULL, status TEXT NOT NULL, serverSeq INTEGER, error TEXT)');}
-export async function submit(db:ReturnType<typeof openStore>,requestId:string,cfg:{baseUrl:string;accessToken:string},send:typeof fetch=fetch){
+export async function submit(db:ReturnType<typeof openStore>,requestId:string,cfg:{baseUrl:string;accessToken:string},send:typeof fetch=fetch,onInvalidate=invalidate){
  const row=db.prepare('SELECT * FROM outbox WHERE requestId=?').get(requestId)!;
  if(row.status==='rejected')throw new Error('WRITE_REJECTED');
  if(row.status==='accepted')return {taskId:String(row.taskId),serverSeq:Number(row.serverSeq),requestId,replayed:true};
@@ -33,15 +34,15 @@ export async function submit(db:ReturnType<typeof openStore>,requestId:string,cf
  }
  if(!Number.isSafeInteger(result.serverSeq)||result.serverSeq!<1)throw new Error('WRITE_PENDING_RETRY_SAME_REQUEST');
  db.prepare("UPDATE outbox SET status='accepted',serverSeq=? WHERE requestId=?").run(result.serverSeq!,requestId);
- invalidate();
+ onInvalidate();
  return {taskId:String(row.taskId),serverSeq:result.serverSeq,requestId,replayed:false};
 }
-export async function perform(input:WriteInput,deps={loadCredentials,current,openStore,officialModule,send:fetch}){
+export async function perform(input:WriteInput,deps={loadCredentials,current,openStore,officialModule,send:fetch},onInvalidate=invalidate){
  const cfg=deps.loadCredentials();const p=await deps.current(true);const db=deps.openStore('data/operations.sqlite');initOutbox(db);
  try{
   const fingerprint=createHmac('sha256',cfg.encryptionPassword).update(JSON.stringify(Object.fromEntries(Object.entries(input).sort(([a],[b])=>a.localeCompare(b))))).digest('hex');
   const existing=db.prepare('SELECT fingerprint FROM outbox WHERE requestId=?').get(input.requestId);
-  if(existing){if(existing.fingerprint!==fingerprint)throw new Error('IDEMPOTENCY_KEY_REUSED');return await submit(db,input.requestId,cfg,deps.send);}
+  if(existing){if(existing.fingerprint!==fingerprint)throw new Error('IDEMPOTENCY_KEY_REUSED');return await submit(db,input.requestId,cfg,deps.send,onInvalidate);}
   if(db.prepare("SELECT 1 FROM outbox WHERE status='pending'").get())throw new Error('WRITE_PENDING_RETRY_SAME_REQUEST');
   if(input.expectedServerSeq!==p.serverSeq)throw new Error('STALE_REVISION_READ_AGAIN');
   const official=await deps.officialModule();const now=Date.now();let taskId:string,action:any;
@@ -98,6 +99,15 @@ export async function perform(input:WriteInput,deps={loadCredentials,current,ope
    db.prepare("INSERT INTO outbox(requestId,fingerprint,body,taskId,status) VALUES(?,?,?,?,'pending')").run(input.requestId,fingerprint,body,taskId);
    db.exec('COMMIT');
   }catch(e){db.exec('ROLLBACK');throw e;}
-  return await submit(db,input.requestId,cfg,deps.send);
+  return await submit(db,input.requestId,cfg,deps.send,onInvalidate);
  }finally{db.close();}
+}
+
+export function createWriter(account:Account,sync:ReturnType<typeof createSync>){
+ let accountQueue:Promise<unknown>=Promise.resolve();
+ const deps={loadCredentials:()=>loadCredentials(account.credentialsPath),current:sync.current,openStore:()=>openAccountStore(account),officialModule,send:fetch};
+ return (input:WriteInput)=>{
+  const result=accountQueue.then(()=>perform(input,deps,sync.invalidate));
+  accountQueue=result.catch(()=>{});return result;
+ };
 }
