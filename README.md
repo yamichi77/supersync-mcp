@@ -130,6 +130,8 @@ src/probe.ts / inspect-shapes.tsは診断用です。公開Issueへ診断結果�
 
 ## 対応範囲
 
+タスクの作成・更新では、[予定と期限](docs/TASK-DATES.md)、[標準リマインダー](docs/TASK-REMINDERS.md)、[サブタスク作成](docs/TASK-SUBTASKS.md)に対応します。日付の解釈は現在 Asia/Tokyo 固定です。通知の配信は同期先の Super Productivity アプリと OS の通知許可に依存します。
+
 [upstream.json](upstream.json)の公式リビジョンとschema version 4を基準にしています。
 別バージョンとの互換性や全ての公式操作を保証するものではありません。
 
@@ -140,7 +142,7 @@ GUIの通知・外部Issue更新などブラウザEffectsは実行しません�
 
 ## コミット前の秘密情報検査
 
-.pre-commit-config.yamlでBetterleaks v1.7.3を使用します。
+.pre-commit-config.yamlで公式 Betterleaks v1.9.0 のコミット `81aff7a638638aae3a659845d089043e1d8fe9ac` に固定しています。
 cloneした環境ごとにpre-commitをインストールし、`pre-commit install --install-hooks`を実行してください。
 以後、git commit時にステージ済み差分を検査し、検出時はコミットを停止します。
 初回は検査ツールの取得にネットワーク接続が必要です。
@@ -148,6 +150,7 @@ cloneした環境ごとにpre-commitをインストールし、`pre-commit insta
 
 この設定のBetterleaksフックはステージ済み差分を検査します。
 `pre-commit run --all-files`でも未ステージの全ファイルを検査する設定にはなりません。
+初回・公開前は同じ版の Betterleaks で、公開対象だけのディレクトリに対する `betterleaks dir --redact` と、リポジトリの `betterleaks git --log-opts="--all" --redact` も実行してください。生成物や実データを含む作業ディレクトリ全体を公開対象として扱わないでください。
 .gitignoreの除外も併用し、トークン、鍵、data/、secrets/を強制追加しないでください。
 フックをスキップしたコミットや、全種類の秘密情報の検出を保証するものではありません。
 

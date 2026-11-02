@@ -1,3 +1,4 @@
+import {dateState} from './dates.js';
 import {compareVectorClocks,mergeVectorClocks} from '@sp/sync-core';
 import {validatePage} from './ingest.js';
 import {applyArchive,emptyArchive} from './archive.js';
@@ -33,7 +34,7 @@ export async function project(db:DatabaseSync,password:string){
   if(!official.KNOWN_ACTION_TYPES.has(op.actionType)&&!official.isLwwUpdateActionType(op.actionType))throw new Error('PROJECTION_ACTION_UNSUPPORTED');
   const action=official.convertOpToAction(op);
   const archives=applyArchive(state,action,op.timestamp,official);
-  state={...official.reduce(state,action),...archives};
+  state={...official.reduce(dateState(official,state,op.timestamp),action),...archives};
   clock=mergeVectorClocks(clock,op.vectorClock);serverSeq=seq;
  }
  if(!initialized)throw new Error('PROJECTION_SNAPSHOT_REQUIRED');
