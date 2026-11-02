@@ -18,7 +18,9 @@ const contextOutput=z.object({id:z.string(),title:z.string(),color:z.string().nu
 const serverSeqOutput=z.number().int().min(0);
 const writeOutput={taskId:z.string(),serverSeq:serverSeqOutput,requestId:z.string(),replayed:z.boolean()};
 export function makeServer(provider:typeof current=current,canWrite=false,writer:typeof writeTask=writeTask){
- const mcp=new McpServer({name:'super-productivity-mcp',version:'0.3.0'});
+ // Keep the largest supported 50-column board request valid, but bound work
+ // before schema validation (including unknown nested properties).
+ const mcp=new McpServer({name:'super-productivity-mcp',version:'0.3.0'},{maxToolInputElements:16_384});
  const annotations={readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false};
  const output=(value:Record<string,unknown>)=>{
   const text=JSON.stringify(value);
